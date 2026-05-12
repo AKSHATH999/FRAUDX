@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dashboard</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>FRAUDX</h2>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/detect">Detect Fraud</a>
+    <a href="/history">History</a>
+    <a href="/logout">Logout</a>
+</div>
+
+<div class="main">
+
+<h1>Welcome, {{ user }}</h1>
+
+<div class="card">
+    <h3>Total: {{ total }}</h3>
+    <h3>Safe: {{ safe }}</h3>
+    <h3>Fraud: {{ fraud }}</h3>
+</div>
+
+<div class="card">
+    <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
+        <canvas id="pieChart" style="max-width:300px;"></canvas>
+        <canvas id="barChart" style="max-width:400px;"></canvas>
+    </div>
+</div>
+
+</div>
+
+<script>
+const safe = {{ safe }};
+const fraud = {{ fraud }};
+
+new Chart(document.getElementById("pieChart"), {
+    type: "pie",
+    data: {
+        labels: ["Safe", "Fraud"],
+        datasets: [{ data: [safe, fraud], backgroundColor: ["#22c55e","#ef4444"] }]
+    }
+});
+
+new Chart(document.getElementById("barChart"), {
+    type: "bar",
+    data: {
+        labels: ["Safe","Fraud"],
+        datasets: [{ data: [safe, fraud], backgroundColor: ["#38bdf8","#ef4444"] }]
+    }
+});
+</script>
+
+</body>
+</html>

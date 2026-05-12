@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transaction History - FRAUDX</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+}
+
+.container {
+    padding: 20px;
+    margin-left: 220px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #334155;
+}
+
+th {
+    background: #1e293b;
+    color: #38bdf8;
+}
+
+tr:hover {
+    background: #1e293b;
+}
+
+.fraud {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+.safe {
+    color: #22c55e;
+    font-weight: bold;
+}
+
+.sidebar {
+    width: 200px;
+    height: 100vh;
+    position: fixed;
+    background: #111827;
+    padding: 20px;
+}
+
+.sidebar a {
+    display: block;
+    color: white;
+    margin: 15px 0;
+    text-decoration: none;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>FRAUDX</h2>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/detect">Detect Fraud</a>
+    <a href="/history">Transaction History</a>
+    <a href="/logout">Logout</a>
+</div>
+
+<div class="container">
+
+    <h1>📊 Transaction History</h1>
+
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Amount</th>
+            <th>Time</th>
+            <th>Result</th>
+        </tr>
+
+        {% for row in data %}
+        <tr>
+            <td>{{ row.id }}</td>
+            <td>{{ row.amount }}</td>
+            <td>{{ row.time }}</td>
+
+            {% if "FRAUD" in row.prediction_result %}
+                <td class="fraud">{{ row.prediction_result }}</td>
+            {% else %}
+                <td class="safe">{{ row.prediction_result }}</td>
+            {% endif %}
+
+        </tr>
+        {% endfor %}
+
+    </table>
+
+</div>
+
+</body>
+</html>

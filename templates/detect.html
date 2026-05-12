@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Detect Fraud - FRAUDX</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 220px;
+    height: 100vh;
+    position: fixed;
+    background: #111827;
+    padding: 20px;
+}
+
+.sidebar h2 {
+    color: #38bdf8;
+}
+
+.sidebar a {
+    display: block;
+    color: white;
+    text-decoration: none;
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.sidebar a:hover {
+    background: #1e293b;
+}
+
+/* MAIN */
+.main {
+    margin-left: 240px;
+    padding: 40px;
+    text-align: center;
+}
+
+input {
+    padding: 10px;
+    margin: 10px;
+    width: 250px;
+    border-radius: 8px;
+    border: none;
+}
+
+button {
+    padding: 10px 20px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #dc2626;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>FRAUDX</h2>
+    <a href="/dashboard">📊 Dashboard</a>
+    <a href="/detect">🧠 Detect Fraud</a>
+    <a href="/history">📜 History</a>
+    <a href="/logout">🚪 Logout</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<h1>FRAUD DETECTION</h1>
+
+<form method="POST">
+    <input name="time" placeholder="Time">
+    <input name="amount" placeholder="Amount">
+    <br>
+    <button type="submit">Detect</button>
+</form>
+
+<h2>{{ prediction }}</h2>
+
+</div>
+
+</body>
+</html>
