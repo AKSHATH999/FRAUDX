@@ -1,34 +1,30 @@
 from flask import Flask, render_template, request, redirect, session
-import mysql.connector
+import sqlite3
 import joblib
 import numpy as np
 
 app = Flask(__name__)
 app.secret_key = "fraudx_secret_key"
 
-# Load Trained ML Model
+# Load ML Model
 model = joblib.load('trained_model/fraud_model.pkl')
 
-# Database Connection
+# DB CONNECTION
 def get_db_connection():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Aksh13@30",
-        database="fraudx"
-    )
+    conn = sqlite3.connect("fraudx.db")
+    conn.row_factory = sqlite3.Row
+    return conn
 
-# HOME PAGE
+# HOME
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# REGISTER PAGE
+# REGISTER
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
     if request.method == "POST":
-
         username = request.form["username"]
         password = request.form["password"]
 
@@ -36,14 +32,12 @@ def register():
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            query = "INSERT INTO users (username, password) VALUES (%s, %s)"
-            values = (username, password)
-
-            cursor.execute(query, values)
+            cursor.execute(
+                "INSERT INTO users (username, password) VALUES (?, ?)",
+                (username, password)
+            )
 
             conn.commit()
-
-            cursor.close()
             conn.close()
 
             return redirect("/login")
@@ -53,7 +47,7 @@ def register():
 
     return render_template("register.html")
 
-# LOGIN PAGE
+# LOGIN
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
@@ -63,21 +57,19 @@ def login():
         password = request.form["password"]
 
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
 
-        query = "SELECT * FROM users WHERE username=%s AND password=%s"
-        values = (username, password)
-
-        cursor.execute(query, values)
+        cursor.execute(
+            "SELECT * FROM users WHERE username=? AND password=?",
+            (username, password)
+        )
 
         user = cursor.fetchone()
-
         conn.close()
 
         if user:
             session["user"] = username
             return redirect("/dashboard")
-
         else:
             return "Invalid credentials"
 
@@ -93,16 +85,13 @@ def dashboard():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # total transactions
     cursor.execute("SELECT COUNT(*) FROM predictions")
     total = cursor.fetchone()[0]
 
-    # safe transactions
-    cursor.execute("SELECT COUNT(*) FROM predictions WHERE prediction_result LIKE '%SAFE%'")
+    cursor.execute("SELECT COUNT(*) FROM predictions WHERE prediction_result='SAFE'")
     safe = cursor.fetchone()[0]
 
-    # fraud transactions
-    cursor.execute("SELECT COUNT(*) FROM predictions WHERE prediction_result LIKE '%FRAUD%'")
+    cursor.execute("SELECT COUNT(*) FROM predictions WHERE prediction_result='FRAUD'")
     fraud = cursor.fetchone()[0]
 
     conn.close()
@@ -115,19 +104,15 @@ def dashboard():
         fraud=fraud
     )
 
-# FRAUD DETECTION
+# DETECT FRAUD
 @app.route("/detect", methods=["GET", "POST"])
 def detect():
-    print("METHOD:", request.method)
-    print("FORM DATA:", request.form)
 
     prediction = None
 
     if request.method == "POST":
 
         try:
-            print("DETECT ROUTE HIT")
-
             time = float(request.form["time"])
             amount = float(request.form["amount"])
 
@@ -135,51 +120,42 @@ def detect():
             features = np.array([time] + v_features + [amount]).reshape(1, -1)
 
             result = model.predict(features)[0]
-
             prediction = "FRAUD" if result == 1 else "SAFE"
-
-            print("PREDICTION:", prediction)
 
             conn = get_db_connection()
             cursor = conn.cursor()
 
             cursor.execute(
-                "INSERT INTO predictions (prediction_result, amount, time) VALUES (%s, %s, %s)",
-                (prediction, amount, time)
+                "INSERT INTO predictions (amount, time, prediction_result) VALUES (?, ?, ?)",
+                (amount, time, prediction)
             )
 
             conn.commit()
             conn.close()
 
-            print("INSERT DONE")
-
         except Exception as e:
-            print("ERROR:", e)
             prediction = f"Error: {e}"
 
     return render_template("detect.html", prediction=prediction)
-#TRANSACTION HISTORY
+
+# HISTORY
 @app.route("/history")
 def history():
 
-    # safety check (user must be logged in)
     if "user" not in session:
         return redirect("/login")
 
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM predictions ORDER BY id DESC")
-        data = cursor.fetchall()
+    cursor.execute("SELECT * FROM predictions ORDER BY id DESC")
+    data = cursor.fetchall()
 
-        conn.close()
+    conn.close()
 
-        return render_template("history.html", data=data)
+    return render_template("history.html", data=data)
 
-    except Exception as e:
-        return f"Error: {e}"
-#STATS
+# STATS API
 @app.route("/stats")
 def stats():
 
@@ -192,7 +168,7 @@ def stats():
     cursor.execute("SELECT COUNT(*) FROM predictions WHERE prediction_result='SAFE'")
     safe = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM predictions WHERE prediction_result LIKE '%FRAUD%'")
+    cursor.execute("SELECT COUNT(*) FROM predictions WHERE prediction_result='FRAUD'")
     fraud = cursor.fetchone()[0]
 
     conn.close()
@@ -202,14 +178,13 @@ def stats():
         "safe": safe,
         "fraud": fraud
     }
+
 # LOGOUT
 @app.route("/logout")
 def logout():
-
     session.pop("user", None)
-
     return redirect("/login")
 
-# RUN FLASK
+# RUN APP
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=10000, debug=True)
